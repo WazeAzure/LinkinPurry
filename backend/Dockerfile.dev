@@ -1,0 +1,26 @@
+# Development Dockerfile for Backend
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies
+RUN npm install
+
+# Install development dependencies
+RUN npm install --save-dev nodemon ts-node typescript @types/node
+
+# Copy the project files
+COPY . .
+
+# Set default environment variables
+ENV NODE_ENV=development
+ENV PORT=3000
+
+# Expose the port
+EXPOSE 3000
+
+# Start the backend with hot reloading
+CMD ["npx", "nodemon", "-L", "src", "--exec", "npx tsx src/index.ts"]

@@ -1,0 +1,75 @@
+backend/
+├── src/
+│   ├── config/
+│   │   ├── environment.ts         # Environment configuration
+│   │   ├── fastify.ts            # Fastify configuration
+│   │   ├── swagger.ts            # OpenAPI/Swagger configuration
+│   │   ├── redis.ts              # Redis configuration
+│   │   └── database.ts           # PostgreSQL configuration
+│   ├── db/
+│   │   └── init.sql              # Your initial database schema
+│   ├── models/
+│   │   ├── user.model.ts         # User type definitions
+│   │   ├── feed.model.ts         # Feed type definitions
+│   │   ├── chat.model.ts         # Chat type definitions
+│   │   ├── connection.model.ts    # Connection type definitions
+│   │   └── push-subscription.model.ts
+│   ├── repositories/
+│   │   ├── base.repository.ts     # Base repository with common CRUD operations
+│   │   ├── user.repository.ts
+│   │   ├── feed.repository.ts
+│   │   ├── chat.repository.ts
+│   │   ├── connection.repository.ts
+│   │   └── push-subscription.repository.ts
+│   ├── services/
+│   │   ├── user.service.ts
+│   │   ├── feed.service.ts
+│   │   ├── chat.service.ts
+│   │   ├── connection.service.ts
+│   │   ├── push-notification.service.ts
+│   │   ├── redis.service.ts       # Redis caching operations
+│   │   └── auth.service.ts        # Authentication & authorization
+│   ├── controllers/
+│   │   ├── user.controller.ts
+│   │   ├── feed.controller.ts
+│   │   ├── chat.controller.ts
+│   │   ├── connection.controller.ts
+│   │   └── push-subscription.controller.ts
+│   ├── routes/
+│   │   ├── v1/
+│   │   │   ├── user.routes.ts
+│   │   │   ├── feed.routes.ts
+│   │   │   ├── chat.routes.ts
+│   │   │   ├── connection.routes.ts
+│   │   │   └── push-subscription.routes.ts
+│   │   └── index.ts
+│   ├── middlewares/
+│   │   ├── auth.middleware.ts
+│   │   ├── validation.middleware.ts
+│   │   └── error-handler.middleware.ts
+│   ├── types/
+│   │   ├── environment.d.ts       # Environment type definitions
+│   │   └── common.d.ts           # Common type definitions
+│   ├── utils/
+│   │   ├── password.util.ts      # Password hashing
+│   │   ├── jwt.util.ts           # JWT handling
+│   │   └── logger.util.ts        # Logging utilities
+│   ├── openapi/
+│   │   ├── schemas/
+│   │   │   ├── user.schema.ts
+│   │   │   ├── feed.schema.ts
+│   │   │   ├── chat.schema.ts
+│   │   │   ├── connection.schema.ts
+│   │   │   └── push-subscription.schema.ts
+│   │   └── index.ts
+│   └── app.ts                    # Main application file
+├── tests/
+│   ├── integration/             # Integration tests
+│   ├── unit/                   # Unit tests
+│   └── fixtures/               # Test fixtures
+├── Dockerfile.dev              # Development Dockerfile
+├── .env.example               # Example environment variables
+├── .gitignore
+├── tsconfig.json             # TypeScript configuration
+├── package.json
+└── README.md
