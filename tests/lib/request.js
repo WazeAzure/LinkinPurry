@@ -4,7 +4,7 @@ import http from "k6/http";
 export function get(path, { token } = {}) {
   return http.get(ENDPOINT + path, {
     headers: {
-      Cookie: `token=${token}`,
+      ...(token ? { Cookie: `authToken=${token}` } : {}),
     },
   });
 }
@@ -12,7 +12,7 @@ export function get(path, { token } = {}) {
 export function post(path, body, { token } = {}) {
   return http.post(ENDPOINT + path, JSON.stringify(body), {
     headers: {
-      Cookie: `token=${token}`,
+      ...(token ? { Cookie: `authToken=${token}` } : {}),
       "Content-Type": "application/json",
     },
   });

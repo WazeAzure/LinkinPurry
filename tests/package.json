@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "test:profile": "k6 run profile.js",
-    "test:feed": "k6 run feed.js"
+    "test:feed": "k6 run feed.js",
+    "test:profile:docker": "docker compose -f ../docker-compose.yml run --rm loadtest-profile",
+    "test:feed:docker": "docker compose -f ../docker-compose.yml run --rm loadtest-feed",
+    "profile:cpu:docker": "docker compose -f ../docker-compose.yml up backend-cpu-profile",
+    "profile:heap:docker": "docker compose -f ../docker-compose.yml up backend-heap-profile"
   },
   "keywords": [],
   "author": "",

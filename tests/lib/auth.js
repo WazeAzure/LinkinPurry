@@ -17,14 +17,16 @@ export function login(identifier, password) {
   }
 
   check(body, {
-    "there is a token is valid":
-      body &&
-      body.body &&
-      body.body.token &&
-      typeof body.body.token === "string",
+    "login response has token": (payload) =>
+      Boolean(
+        payload &&
+          payload.success === true &&
+          payload.body &&
+          typeof payload.body.token === "string"
+      ),
   });
 
-  const token = body.body.token;
+  const token = body?.body?.token;
 
   return token;
 }

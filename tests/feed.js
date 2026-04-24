@@ -1,6 +1,6 @@
 import { check } from "k6";
-import { login } from "./lib/auth.js";
 import { get } from "./lib/request.js";
+import { createFeedPost, createTestUsers } from "./lib/test-data.js";
 
 export let options = {
   stages: [
@@ -14,25 +14,40 @@ export let options = {
   },
 };
 
-export default function () {
-  const userId = Math.random() < 0.5 ? 1 : 2;
+export function setup() {
+  const [author, secondUser] = createTestUsers(2);
 
-  const token = login(`user${userId}wbd`, `password${userId}`);
+  createFeedPost(author.token, "k6 seeded post 1");
+  createFeedPost(author.token, "k6 seeded post 2");
+  createFeedPost(secondUser.token, "k6 seeded post 3");
 
-  let cursor = getNextCursor(token);
-
-  for (let i = 0; i < 20 && cursor; i++) {
-    cursor = getNextCursor(token, cursor);
-  }
+  return { author, secondUser };
 }
 
-function getNextCursor(token, cursor) {
-  const res = get("/api/feed?limit=100" + (cursor ? "&cursor=" + cursor : ""), {
-    token,
-  });
+export default function (data) {
+  const author = data.author;
+  const token = author.token;
+
+  let publicCursor = getPublicFeedPage();
+  if (publicCursor) {
+    getPublicFeedPage(publicCursor);
+  }
+
+  let authenticatedCursor = getAuthenticatedFeedPage(author.id, token);
+  if (authenticatedCursor) {
+    getAuthenticatedFeedPage(author.id, token, authenticatedCursor);
+  }
+
+  getUserFeed(author.id);
+}
+
+function getPublicFeedPage(cursor) {
+  const res = get(
+    "/api/feed/all?limit=20" + (cursor ? "&cursor=" + cursor : "")
+  );
 
   check(res, {
-    "status is ok": (r) => r.status === 200,
+    "public feed status is ok": (r) => r.status === 200,
   });
 
   const data = res.json();
@@ -41,5 +56,55 @@ function getNextCursor(token, cursor) {
     console.log(data);
   }
 
-  return data.body.cursor;
+  check(data, {
+    "public feed shape is ok": (d) =>
+      d &&
+      d.success === true &&
+      d.body &&
+      Array.isArray(d.body.feeds),
+  });
+
+  return data?.body?.cursor ?? null;
+}
+
+function getAuthenticatedFeedPage(userId, token, cursor) {
+  const res = get(
+    "/api/feed/all/" + userId + "?limit=20" + (cursor ? "&cursor=" + cursor : ""),
+    { token }
+  );
+
+  check(res, {
+    "authenticated feed status is ok": (r) => r.status === 200,
+  });
+
+  const data = res.json();
+
+  if (!data.body) {
+    console.log(data);
+  }
+
+  check(data, {
+    "authenticated feed shape is ok": (d) =>
+      d &&
+      d.success === true &&
+      d.body &&
+      Array.isArray(d.body.feeds),
+  });
+
+  return data?.body?.cursor ?? null;
+}
+
+function getUserFeed(userId) {
+  const res = get("/api/feed/" + userId);
+
+  check(res, {
+    "user feed status is ok": (r) => r.status === 200,
+  });
+
+  const data = res.json();
+
+  check(data, {
+    "user feed shape is ok": (d) =>
+      d && d.success === true && Array.isArray(d.data),
+  });
 }

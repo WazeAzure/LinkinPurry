@@ -1,6 +1,6 @@
 import { check } from "k6";
-import { login } from "./lib/auth.js";
 import { get } from "./lib/request.js";
+import { createTestUsers } from "./lib/test-data.js";
 
 export let options = {
   stages: [
@@ -14,11 +14,16 @@ export let options = {
   },
 };
 
-export default function () {
-  const userId = Math.floor(Math.random() * 100) + 1;
-  const username = `user${userId}wbd.wbd.itb.ac.id`;
-  const password = `password${userId}`;
-  let token = login(username, password);
+export function setup() {
+  const [owner, target] = createTestUsers(2);
+  return { owner, target };
+}
+
+export default function (data) {
+  const owner = data.owner;
+  const target = data.target;
+  const userId = owner.id;
+  const token = owner.token;
 
   const res = get("/api/profile/" + userId, { token });
 
@@ -26,21 +31,25 @@ export default function () {
     "status is ok": (r) => r.status === 200,
   });
 
-  const data = res.json();
+  const profilePayload = res.json();
 
-  if (!data.body) {
-    console.log(data);
+  if (!profilePayload.body) {
+    console.log(profilePayload);
   }
 
-  check(data, {
-    "data is ok": (d) => d.body.username === username,
+  check(profilePayload, {
+    "authenticated profile shape is ok": (d) =>
+      d &&
+      d.success === true &&
+      d.body &&
+      d.body.username === owner.username &&
+      typeof d.body.connection_count === "number" &&
+      d.body.accessLevel === "owner",
   });
 
-  const otherUserId = ((userId + 1) % 100) + 1;
+  const otherUserId = target.id;
 
-  const otherProfile = get("/api/profile/" + otherUserId, {
-    token,
-  });
+  const otherProfile = get("/api/profile/public/" + otherUserId);
 
   check(otherProfile, {
     "other profile is ok": (p) => p.status === 200,
@@ -49,6 +58,10 @@ export default function () {
   const otherProfileData = otherProfile.json().body;
 
   check(otherProfileData, {
-    "other profile data is ok": (p) => p.username === `user${otherUserId}wbd`,
+    "public profile shape is ok": (p) =>
+      p &&
+      p.username === target.username &&
+      typeof p.connection_count === "number" &&
+      p.accessLevel === "public",
   });
 }

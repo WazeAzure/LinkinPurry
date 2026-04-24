@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: wbd
       POSTGRES_PASSWORD: passwordwbd
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql
       - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
@@ -35,9 +35,60 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - ./backend/profiles:/app/profiles
     ports:
       - "3000:3000"
     command: npm run dev 
+    networks:
+      - internal
+    restart: always
+
+  backend-cpu-profile:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    environment:
+      - DATABASE_URL=postgresql://wbd:passwordwbd@db:5432/linkinpurry
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+      - NODE_OPTIONS=--cpu-prof --cpu-prof-dir=/app/profiles
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/profiles:/app/profiles
+    ports:
+      - "3000:3000"
+    command: npm run dev
+    networks:
+      - internal
+    restart: always
+
+  backend-heap-profile:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    environment:
+      - DATABASE_URL=postgresql://wbd:passwordwbd@db:5432/linkinpurry
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+      - NODE_OPTIONS=--heap-prof --heap-prof-dir=/app/profiles
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/profiles:/app/profiles
+    ports:
+      - "3000:3000"
+    command: npm run dev
     networks:
       - internal
     restart: always
@@ -70,6 +121,32 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+
+  loadtest-profile:
+    image: grafana/k6:latest
+    working_dir: /tests
+    volumes:
+      - ./tests:/tests:ro
+    environment:
+      - ENDPOINT=http://backend:3000
+    command: run /tests/profile.js
+    depends_on:
+      - backend
+    networks:
+      - internal
+
+  loadtest-feed:
+    image: grafana/k6:latest
+    working_dir: /tests
+    volumes:
+      - ./tests:/tests:ro
+    environment:
+      - ENDPOINT=http://backend:3000
+    command: run /tests/feed.js
+    depends_on:
+      - backend
+    networks:
+      - internal
 
 volumes:
   db-data:
